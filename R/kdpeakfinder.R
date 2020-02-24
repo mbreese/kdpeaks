@@ -84,7 +84,7 @@ find_peaks_1d <- function(kd, combine_within=1, top_peak_z=1.65) {
   # Identify peaks in order of peak height.
   while (max(tmp.m) > 0) {
     max_peak <- max(tmp.m)
-    peak_i <- which(tmp.m == max_peak)
+    peak_i <- which(tmp.m == max_peak)[1]
     tmp.m[peak_i] <- 0
     peak.m[peak_i] <- n
 
