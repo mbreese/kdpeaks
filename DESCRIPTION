@@ -1,4 +1,4 @@
-Package: kdpeakfinder
+Package: kdpeaks
 Type: Package
 Title: Find peaks in kernel density matrix
 Version: 0.1.0
