@@ -28,21 +28,21 @@ hello <- function() {
 #
 
 #' @export
-find_peaks <- function(kd, combine_within=1, top_peak_z=1.65) {
+find_peaks <- function(kd, combine_within=1, top_peak_pct=0.05) {
 
   if ("x" %in% names(kd) && "y" %in% names(kd) && "z" %in% names(kd)) {
     # print("2d")
-    return(find_peaks_2d(kd, combine_within, top_peak_z))
+    return(find_peaks_2d(kd, combine_within, top_peak_pct))
   }
   if ("x" %in% names(kd) && "y" %in% names(kd)) {
     # print("1d")
-    return(find_peaks_1d(kd, combine_within, top_peak_z))
+    return(find_peaks_1d(kd, combine_within, top_peak_pct))
   }
 
   stop("Bad density object: ", kd)
 }
 
-find_peaks_1d <- function(kd, combine_within=1, top_peak_z=1.65) {
+find_peaks_1d <- function(kd, combine_within=1, top_peak_pct=0.05) {
 
   flow.m <- rep(0, length(kd$x))
 
@@ -136,12 +136,12 @@ find_peaks_1d <- function(kd, combine_within=1, top_peak_z=1.65) {
     y=peak_vals,
     pct=peak_size/sum(peak_size),
     peak.m=peak.m,
-    top_peaks=sum(peak_vals > (mean(kd$y) + top_peak_z * sd(kd$y)))
+    top_peaks=sum(peak_size/sum(peak_size) > top_peak_pct)
   ))
 }
 
 
-find_peaks_2d <- function(kd, combine_within=1, top_peak_z=1.65) {
+find_peaks_2d <- function(kd, combine_within=1, top_peak_pct=0.05) {
 
   flow.m <- matrix(0, nrow=nrow(kd$z), ncol=ncol(kd$z))
 
@@ -280,7 +280,7 @@ find_peaks_2d <- function(kd, combine_within=1, top_peak_z=1.65) {
     z=peak_vals,
     pct=peak_size/sum(peak_size),
     peak.m=peak.m,
-    top_peaks=sum(peak_vals > (mean(kd$z) + top_peak_z * sd(kd$z)))
+    top_peaks=sum(peak_size/sum(peak_size) > top_peak_pct)
   ))
 }
 
