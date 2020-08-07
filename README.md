@@ -2,5 +2,5 @@ For more information, see [https://compgen.io/projects/kdpeaks](https://compgen.
 
 ## Installation
 
-library(devtools)
-install_github("mbreese/kdpeaks")
+    library(devtools)
+    install_github("mbreese/kdpeaks")
