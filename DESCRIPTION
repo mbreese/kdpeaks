@@ -1,7 +1,7 @@
 Package: kdpeaks
 Type: Package
 Title: Find peaks in kernel density matrix
-Version: 0.1.0
+Version: 0.1.1
 Author: Marcus R. Breese <marcus.breese@ucsf.edu>
 Maintainer: Marcus R. Breese <marcus.breese@ucsf.edu>
 Description: Given a kernel density estimate matrix (ex: from MASS:kde2d)
