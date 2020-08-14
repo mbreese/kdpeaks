@@ -63,6 +63,8 @@ find_peaks_1d <- function(kd, combine_within=1, top_peak_pct=0.05) {
 
   }
 
+  flow.m[kd$y == 0] <- 0
+  
 
   ## Find the peaks in order of magnitude
   ##
@@ -147,7 +149,6 @@ find_peaks_2d <- function(kd, combine_within=1, top_peak_pct=0.05) {
 
   for (i in 1:nrow(kd$z)) {
     for (j in 1:ncol(kd$z)) {
-    # print(paste0("i=",i,", j=",j))
       ul = NA
       top = NA
       ur = NA
@@ -185,10 +186,20 @@ find_peaks_2d <- function(kd, combine_within=1, top_peak_pct=0.05) {
 
       flow.m[i,j] <- which(c(ul, top, ur,left, me, right, bl, bottom, br)==max(c(ul, top, ur,left, me, right, bl, bottom, br), na.rm = T))[1]
 
+      #   print(paste0("i=",i,", j=",j, ", kd$z[i,j]=",kd$z[i,j],", flow.m[i,j]=", flow.m[i,j]))
+
     }
   }
 
+  flow.m[kd$z == 0] <- 0
 
+  # print("populated matrix")
+
+  # for (i in 1:nrow(kd$z)) {
+  #   print(paste0(flow.m[i,], sep=''))
+  # }
+    
+    
   ## Find the peaks in order of magnitude
   ##
   ## Follow the flow established above to find the peaks
@@ -208,10 +219,18 @@ find_peaks_2d <- function(kd, combine_within=1, top_peak_pct=0.05) {
   n <- 1
 
   # Identify peaks in order of peak height.
+  # (Highest peak is 1, next is 2, etc...) all not peaks are 0
+  #
+  # tmp.m is used to assign peak numbers
+  # peak.m is the peak that all cells are assigned to.
+  #        only the peaks will have this value set (to their own rank-order, highest=1, next=2, etc...)
+  #
   while (max(tmp.m) > 0) {
     max_peak <- max(tmp.m)
     peak_xy <- which(tmp.m == max_peak, arr.ind = TRUE)
-    #print(peak_xy)
+    
+#    print(peak_xy)
+    
     peak_i <- peak_xy[1,1]
     peak_j <- peak_xy[1,2]
     tmp.m[peak_i, peak_j] <- 0
@@ -224,9 +243,9 @@ find_peaks_2d <- function(kd, combine_within=1, top_peak_pct=0.05) {
     # look for adjacent peaks
     #
     # because we are going in order of peak height, we will merge
-    # any adjacent peaks to this one.
+    # any adjacent peaks with this one.
 
-    # print(paste0("Found peak at: [",peak_i,",",peak_j,"] ", sum(tmp.m > 0), " max: ", max_peak, ", tmp.m[]=",tmp.m[peak_i, peak_j]))
+    # print(paste0("Found peak at: [",peak_i,",",peak_j,"] ", sum(tmp.m > 0), " max: ", max_peak, ", peak.m[]=",peak.m[peak_i, peak_j]))
 
     for (i in max(1, peak_i-combine_within): min(nrow(kd$z), peak_i+combine_within)) {
       for (j in max(1, peak_j-combine_within): min(ncol(kd$z), peak_j+combine_within)) {
@@ -248,23 +267,39 @@ find_peaks_2d <- function(kd, combine_within=1, top_peak_pct=0.05) {
   # print("1")
 
   ## assign each position to a peak
+  
+  last_i <- -1
+  last_j <- -1
+  
   while(length(which(peak.m==0, arr.ind = T))>0) {
-    i <- which(peak.m==0, arr.ind = T)[1,1]
-    j <- which(peak.m==0, arr.ind = T)[1,2]
+    peak_ij <- which(peak.m==0, arr.ind = T)
+    i <- peak_ij[1,1]
+    j <- peak_ij[1,2]
+    
+    if (i == last_i && j == last_j) {
+      stop("Infinite loop in assigning peaks")
+    } else{
+      last_i <- i
+      last_j <- j
+    }
+    
     peak.m[i,j] <- recur_peak_2d(flow.m,i,j,peak.m)
+    # print(paste0("assigning peak to: i=",i,', j=',j, ', peak.m[i,j]=',peak.m[i,j]))
   }
   # print("2")
 
+  # find the cumulative height/signal for each peak (based on the kd$z for each position that is assigned to a peak)
   peak_size <- rep(0,length(peak_nums))
   for (i in 1:nrow(kd$z)) {
     for (j in 1:ncol(kd$z)) {
-      peak <- peak.m[i,j]
-      peak_size[peak] <- peak_size[peak] + kd$z[i,j]
+      peak_n <- peak.m[i,j]
+      peak_size[peak_n] <- peak_size[peak_n] + kd$z[i,j]
     }
   }
   # print("3")
 
   peak_vals <- c()
+  # find the height of each peak.
   for (i in 1:length(peak_rows)) {
     peak_vals <- c(peak_vals, kd$z[peak_rows[i], peak_cols[i]])
   }
@@ -285,9 +320,31 @@ find_peaks_2d <- function(kd, combine_within=1, top_peak_pct=0.05) {
 }
 
 recur_peak_2d <- function(mat, row, col, ret.m) {
+  
+  ###################
+  # mat is the flow
+  #
+  #   1 2 3
+  #   4 5 6
+  #   7 8 9
+  #
+  # ret.m is the assigned peak
+  #
+  ###########
+  
+  # print(paste0("recur_peak_2d row=",row,', col=',col,', ret.m[row,col]=',ret.m[row,col],', mat[row,col]=',mat[row,col]))
+  
+  # if the peak was already assigned a peak, just return that.
   if (ret.m[row,col] != 0) {
     return (ret.m[row,col])
   }
+
+  if (mat[row,col] == 0) {
+    # these are flat areas in the density matrix
+    return (-1)
+  }
+    
+  # upper left corner
   if (mat[row,col] == 1) {
     v <- recur_peak_2d(mat, row-1, col-1, ret.m)
     return (v)
@@ -305,6 +362,10 @@ recur_peak_2d <- function(mat, row, col, ret.m) {
     return (v)
   }
   if (mat[row,col] == 5) {
+    # peaks should already have their ret.m set.
+    if (ret.m[row,col] == 0) {
+      stop("peak[",row,",",col,"] = ", ret.m[row,col], " but this is a peak?!?!")
+    }
     return (ret.m[row,col])
   }
   if (mat[row,col] == 6) {
@@ -331,6 +392,10 @@ recur_peak_1d <- function(v, i, ret.m) {
   if (ret.m[i] != 0) {
     return (ret.m[i])
   }
+  if (v[i] == 0) {
+    # these are flat areas in the density curve
+    return (-1)
+  }
   if (v[i] == 1) {
     v <- recur_peak_1d(v, i-1, ret.m)
     return (v)
@@ -343,4 +408,5 @@ recur_peak_1d <- function(v, i, ret.m) {
     return (v)
   }
 }
+
 
