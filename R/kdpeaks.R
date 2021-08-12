@@ -1,22 +1,3 @@
-# Hello, world!
-#
-# This is an example function named 'hello'
-# which prints 'Hello, world!'.
-#
-# You can learn more about package authoring with RStudio at:
-#
-#   http://r-pkgs.had.co.nz/
-#
-# Some useful keyboard shortcuts for package authoring:
-#
-#   Install Package:           'Cmd + Shift + B'
-#   Check Package:             'Cmd + Shift + E'
-#   Test Package:              'Cmd + Shift + T'
-
-hello <- function() {
-  print("Hello, world!")
-}
-
 
 # kd should be a list (or frame) with an $x, $y, and $z component.
 #
@@ -25,6 +6,11 @@ hello <- function() {
 # $z is a matrix with values coresponding to each x/y place on the grid.
 #
 # we will be using these $z values to find the peaks in the contours
+#
+# combine_within is relative to the spacing in the density matrix. For example, 
+# if you are using a 2d kde density matrix with 100 points in each direction,
+# setting combine_within=2 would merge peaks within two points (x or y) of each
+# other. This is not related to the actual values, but the density matrix coordinates.
 #
 
 #' @export
